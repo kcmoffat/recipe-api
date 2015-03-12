@@ -9,6 +9,7 @@ from bs4.dammit import EntitySubstitution
 import urllib2
 import json
 import logging
+import re
 from utils import trim
 
 def parseRecipeUrlToJson(url):
@@ -29,22 +30,18 @@ def parseRecipeUrlToJson(url):
 			return json.dumps({"error" : "Oops!  We had trouble finding a recipe on this page.  Try another URL."})
 	except Exception, e:
 		logging.debug(e)
-		print e
 		return json.dumps({"error" : "Oops!  We had trouble connecting to that site.  Try another URL."})
 
 def isSchemaOrgStandard(soup):
 	try:
-		# soup.findAll(True, {"itemtype" : re.compile("http://schema.org/Recipe", re.IGNORECASE)})[0]
-		soup.findAll(text="http://schema.org/Recipe")
-		return True
+		return soup.findAll(True, {"itemtype" : re.compile("http://schema.org/Recipe", re.IGNORECASE)}) != []
 	except Exception, e:
 		logging.debug(e)
 		return False
 
 def isHRecipeStandard(soup):
 	try:
-		soup.findAll(text="hrecipe")
-		return True
+		return soup.findAll(True, {"class" : re.compile("hrecipe", re.IGNORECASE)}) != []
 	except Exception, e:
 		logging.debug(e)
 		return False
@@ -65,17 +62,21 @@ class RecipeParser:
 		instructions = self.parseRecipeInstructions()
 
 		result = json.dumps({"recipe" : {
-		"site_name" : EntitySubstitution.substitute_html(site_name),
-		"url" : EntitySubstitution.substitute_html(url),
-		"name" : EntitySubstitution.substitute_html(name),
-		"ingredients" : [{"ingredient" : EntitySubstitution.substitute_html(ingredient)} for ingredient in ingredients],
-		"image" : EntitySubstitution.substitute_html(image),
-		"description" : EntitySubstitution.substitute_html(description),
-		"instructions" : EntitySubstitution.substitute_html(instructions)
+		"site_name" : trim(site_name),
+		"url" : trim(url),
+		"name" : trim(name),
+		"ingredients" : [{"ingredient" : trim(ingredient)} for ingredient in ingredients],
+		"image" : trim(image),
+		"description" : trim(description),
+		"instructions" : [{"instruction" : trim(instruction)} for instruction in instructions]
 		}})
 		logging.info(result)
 		return result
 
+	# parseRecipe takes care of trimming whitespace 
+	# and converting unicode to html entities,
+	# no need to worry about that
+	# when implementing these methods.
 	def parseRecipeSiteName(self):
 		"""abstract method"""
 	
@@ -100,85 +101,85 @@ class RecipeParser:
 class SchemaOrgParser(RecipeParser):
 	def parseRecipeSiteName(self):
 		try:
-			return trim(self.soup.findAll("meta", {"property" : "og:site_name"})[0].get("content"))
+			return self.soup.findAll("meta", {"property" : re.compile("og:site_name", re.IGNORECASE)})[0].get("content")
 		except:
 			return ""
 
 	def parseRecipeUrl(self):
 		try:
-			return trim(self.soup.findAll("link", {"rel" : "canonical"})[0].get("href"))
+			return self.soup.findAll("link", {"rel" : re.compile("canonical", re.IGNORECASE)})[0].get("href")
 		except:
 			return ""
 
 	def parseRecipeName(self):
 		try:
-			return trim(self.soup.findAll("meta", {"property" : "og:title"})[0].get("content"))
+			return self.soup.findAll("meta", {"property" : re.compile("og:title", re.IGNORECASE)})[0].get("content")
 		except:
 			return ""
 
 	def parseRecipeIngredients(self):
 		try:
-			return [trim(ingredient.get_text()) for ingredient in self.soup.findAll(True, {"itemprop" : "ingredients"})]
+			return [ingredient.get_text() for ingredient in self.soup.findAll(True, {"itemprop" : re.compile("ingredients", re.IGNORECASE)})]
 		except:
 			return []
 
 	def parseRecipeImage(self):
 		try:
-			return trim(self.soup.findAll("meta", {"property" : "og:image"})[0].get("content"))
+			return self.soup.findAll("meta", {"property" : re.compile("og:image", re.IGNORECASE)})[0].get("content")
 		except:
 			return ""
 
 	def parseRecipeDescription(self):
 		try:
-			return trim(self.soup.findAll(True, {"itemprop" : "description"})[0].get_text())
+			return self.soup.findAll(True, {"itemprop" : re.compile("description", re.IGNORECASE)})[0].get_text()
 		except:
 			return ""
 
 	def parseRecipeInstructions(self):
 		try:
-			return trim(self.soup.findAll(True, {"itemprop" : "recipeInstructions"})[0].get_text())
+			return self.soup.findAll(True, {"itemprop" : re.compile("recipeInstructions", re.IGNORECASE)})[0].stripped_strings
 		except:
 			return ""
 
 class HRecipeParser(RecipeParser):
 	def parseRecipeSiteName(self):
 		try:
-			return trim(self.soup.findAll("meta", {"property" : "og:site_name"})[0].get("content"))
+			return self.soup.findAll("meta", {"property" : re.compile("og:site_name", re.IGNORECASE)})[0].get("content")
 		except:
 			return ""
 
 	def parseRecipeUrl(self):
 		try:
-			return trim(self.soup.findAll("link", {"rel" : "canonical"})[0].get("href"))
+			return self.soup.findAll("link", {"rel" : re.compile("canonical", re.IGNORECASE)})[0].get("href")
 		except:
 			return ""
 
 	def parseRecipeName(self):
 		try:
-			return trim(self.soup.findAll(True, {"class" : "fn"})[0].get_text())
+			return self.soup.findAll(True, {"class" : re.compile("fn", re.IGNORECASE)})[0].get_text()
 		except:
 			return ""
 
 	def parseRecipeIngredients(self):
 		try:
-			return [trim(ingredient.get_text()) for ingredient in self.soup.findAll(True, {"class" : "ingredient"})]
+			return [ingredient.get_text() for ingredient in self.soup.findAll(True, {"class" : re.compile("ingredient", re.IGNORECASE)})]
 		except:
 			return []
 
 	def parseRecipeImage(self):
 		try:
-			return trim(self.soup.findAll(True, {"img" : "og:image"})[0].get("content"))
+			return self.soup.findAll(True, {"class" : re.compile("photo", re.IGNORECASE)})[0].get("src")
 		except:
 			return ""
 
 	def parseRecipeDescription(self):
 		try:
-			return trim(self.soup.findAll(True, {"class" : "summary"})[0].get_text())
+			return self.soup.findAll(True, {"class" : re.compile("summary", re.IGNORECASE)})[0].get_text()
 		except:
 			return ""
 
 	def parseRecipeInstructions(self):
 		try:
-			return trim(self.soup.findAll(True, {"class" : "instructions"})[0].get_text())
+			return self.soup.findAll(True, {"class" : re.compile("instructions", re.IGNORECASE)})[0].stripped_strings
 		except:
 			return ""
