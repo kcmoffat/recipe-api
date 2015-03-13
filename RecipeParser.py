@@ -137,7 +137,13 @@ class SchemaOrgParser(RecipeParser):
 
 	def parseRecipeInstructions(self):
 		try:
-			return self.soup.findAll(True, {"itemprop" : re.compile("recipeInstructions", re.IGNORECASE)})[0].stripped_strings
+			instructions = self.soup.findAll(True, {"itemprop" : re.compile("recipeInstructions", re.IGNORECASE)})
+			if (len(instructions) > 1):
+				logging.info("more than one recipeInstructions tag")
+				return [instruction.get_text() for instruction in instructions]
+			else:
+				logging.info("one or fewer recipeInstructions tag")
+				return instructions[0].stripped_strings
 		except:
 			return ""
 
