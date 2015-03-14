@@ -27,10 +27,10 @@ def parseRecipeUrlToJson(url):
 			return parser.parseRecipe()
 		else:
 			logging.info("html does not conform to a recipe standard")
-			return json.dumps({"error" : "Oops!  We had trouble finding a recipe on this page.  Try another URL."})
+			return json.dumps({"error" : "We had trouble finding a recipe on this page.  Try another URL."})
 	except Exception, e:
 		logging.debug(e)
-		return json.dumps({"error" : "Oops!  We had trouble connecting to that site.  Try another URL."})
+		return json.dumps({"error" : "We had trouble connecting to that site.  Try another URL."})
 
 def isSchemaOrgStandard(soup):
 	try:
