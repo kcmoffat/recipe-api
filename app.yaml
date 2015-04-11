@@ -7,3 +7,7 @@ threadsafe: true
 handlers:
 - url: /.*
   script: endpoints.application
+
+libraries:
+- name: PIL
+  version: latest

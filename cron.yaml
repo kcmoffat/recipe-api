@@ -1,0 +1,4 @@
+cron:
+- description: hourly recipe feed refresh
+  url: /recipe_feeds/fetch_all/
+  schedule: every 2 hours
