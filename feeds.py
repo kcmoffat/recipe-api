@@ -93,7 +93,6 @@ feeds = ['http://www.loveandlemons.com/feed/',
 'http://thevanillabeanblog.com/feed',
 'http://www.topwithcinnamon.com/feed',
 'http://breadtopia.com/feed/',
-'http://thepastrydepartment.com/feed/',
 'http://the-broken-bread.com/feed/',
 
 'http://bitbyafox.com/?feed=rss2',
