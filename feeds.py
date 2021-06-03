@@ -103,4 +103,5 @@ feeds = ['http://www.loveandlemons.com/feed/',
 'http://drinkstraightup.com/feed/',
 
 'http://thethirstywench.com/feed/',
-'https://brewtrain.wordpress.com/feed/']
+'https://brewtrain.wordpress.com/feed/',
+'https://feeds.feedburner.com/omnivorescookbook']
